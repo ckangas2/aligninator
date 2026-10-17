@@ -1,0 +1,25 @@
+# scRNA-seq runs in PRJNA688309 (GSE163952). Sizes are gzip bytes from ENA.
+# Columns are tab-separated. Comment lines and blanks are ignored.
+sample	run	experiment	cell_line	timepoint	acyclovir	replicate	download_gb
+exp1_Xmoo1_3dpi_rep1	SRR13316188	1	Xmoo1	3dpi	no	rep1	6.56
+exp1_Xmoo1_3dpi_rep2	SRR13316189	1	Xmoo1	3dpi	no	rep2	6.87
+exp1_Xmoo1_6dpi_rep1	SRR13316190	1	Xmoo1	6dpi	no	rep1	6.05
+exp1_Xmoo1_6dpi_rep2	SRR13316191	1	Xmoo1	6dpi	no	rep2	6.00
+exp1_Xmoo1_ctrl_rep1	SRR13316192	1	Xmoo1	ctrl	no	rep1	6.57
+exp1_Xmoo1_ctrl_rep2	SRR13316193	1	Xmoo1	ctrl	no	rep2	6.46
+exp2_Xmoo1_1dpi_rep1	SRR21855386	2	Xmoo1	1dpi	no	rep1	3.38
+exp2_Xmoo1_1dpi_rep2	SRR21855387	2	Xmoo1	1dpi	no	rep2	4.54
+exp2_Xmoo1_3dpi_ACV_rep1	SRR21855390	2	Xmoo1	3dpi	yes	rep1	5.66
+exp2_Xmoo1_3dpi_rep1	SRR21855388	2	Xmoo1	3dpi	no	rep1	5.63
+exp2_Xmoo1_3dpi_rep2	SRR21855389	2	Xmoo1	3dpi	no	rep2	6.25
+exp2_Xmoo1_3dpi_ACV_rep2	SRR21855391	2	Xmoo1	3dpi	yes	rep2	4.57
+exp2_Xmoo1_ctrl_rep1	SRR21855384	2	Xmoo1	ctrl	no	rep1	1.98
+exp2_Xmoo1_ctrl_rep2	SRR21855385	2	Xmoo1	ctrl	no	rep2	1.87
+exp2_iPSC-2_1dpi_rep1	SRR21855378	2	iPSC-2	1dpi	no	rep1	1.32
+exp2_iPSC-2_1dpi_rep2	SRR21855379	2	iPSC-2	1dpi	no	rep2	1.38
+exp2_iPSC-2_3dpi_ACV_rep1	SRR21855382	2	iPSC-2	3dpi	yes	rep1	1.53
+exp2_iPSC-2_3dpi_rep1	SRR21855380	2	iPSC-2	3dpi	no	rep1	1.44
+exp2_iPSC-2_3dpi_ACV_rep2	SRR21855383	2	iPSC-2	3dpi	yes	rep2	1.01
+exp2_iPSC-2_3dpi_rep2	SRR21855381	2	iPSC-2	3dpi	no	rep2	1.60
+exp2_iPSC-2_ctrl_rep1	SRR21855376	2	iPSC-2	ctrl	no	rep1	1.05
+exp2_iPSC-2_ctrl_rep2	SRR21855377	2	iPSC-2	ctrl	no	rep2	1.44

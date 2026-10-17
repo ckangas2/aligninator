@@ -1,0 +1,9 @@
+reference/
+runs/
+fastq/
+logs/
+*.h5ad
+*.bam
+*.tar.gz
+__pycache__/
+.DS_Store
