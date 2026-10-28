@@ -17,13 +17,17 @@ if [ "$1" = "--all" ]; then
 else
   samples=("$@")
 fi
-echo "sample,fastq_1,fastq_2"
+# Check every sample before printing anything: a partial failure must not
+# leave a header-only CSV behind in the redirect target.
+rows=()
 for s in "${samples[@]}"; do
   run=$(awk -F'\t' -v s="$s" '!/^#/ && $1==s {print $2}' "$MANIFEST")
   [ -n "$run" ] || { echo "no such sample in $MANIFEST: $s" >&2; exit 1; }
   r1="$FASTQ_DIR/${run}_1.fastq.gz"; r2="$FASTQ_DIR/${run}_2.fastq.gz"
   for f in "$r1" "$r2"; do
-    [ -s "$f" ] || { echo "missing $f -- run scripts/fetch_runs.sh --sample $s" >&2; exit 1; }
+    [ -s "$f" ] || { echo "missing $f -- run scripts/fetch_runs.sh --sample $s, or set FASTQ_DIR" >&2; exit 1; }
   done
-  echo "$s,$(cd "$(dirname "$r1")" && pwd)/$(basename "$r1"),$(cd "$(dirname "$r2")" && pwd)/$(basename "$r2")"
+  rows+=("$s,$(cd "$(dirname "$r1")" && pwd)/$(basename "$r1"),$(cd "$(dirname "$r2")" && pwd)/$(basename "$r2")")
 done
+echo "sample,fastq_1,fastq_2"
+printf '%s\n' "${rows[@]}"

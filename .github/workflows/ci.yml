@@ -67,6 +67,26 @@ jobs:
             echo "swapped R1/R2 was accepted"; exit 1
           fi
 
+      # The 10x reference ships as genome.fa / genes.gtf, the same names the
+      # index step once used for its merged outputs: it wrote through the
+      # input symlinks and destroyed the user's host reference.
+      - name: Inputs named like the 10x reference are left untouched
+        run: |
+          mkdir -p ref10x
+          zcat tests/data/host.fa.gz  > ref10x/genome.fa
+          zcat tests/data/host.gtf.gz > ref10x/genes.gtf
+          md5sum ref10x/* > ref10x.md5
+          nextflow run . -profile test,docker -c ci.config \
+              --host_fasta ref10x/genome.fa --host_gtf ref10x/genes.gtf --outdir clobber
+          md5sum -c ref10x.md5
+
+      - name: Header-only samplesheet must fail
+        run: |
+          echo 'sample,fastq_1,fastq_2' > tests/data/empty.csv
+          if nextflow run . -profile test,docker -c ci.config --input tests/data/empty.csv --outdir empty; then
+            echo "empty samplesheet was accepted"; exit 1
+          fi
+
       - name: Wrong viral contig name must fail validation
         run: |
           if nextflow run . -profile test,docker -c ci.config --viral_contig_rename 'X:Y' --outdir badref; then

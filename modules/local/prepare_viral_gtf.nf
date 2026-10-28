@@ -4,7 +4,7 @@ process PREPARE_VIRAL_GTF {
     publishDir "${params.outdir}/reference", mode: params.publish_dir_mode
 
     input:
-    path gtf
+    path gtf, stageAs: 'in/*'     // never let an output name shadow the input link
 
     output:
     path 'viral.normalised.gtf', emit: gtf

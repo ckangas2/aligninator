@@ -102,6 +102,10 @@ def resolvePath(base, String p) {
 def readSamplesheet(path) {
     def seen = [] as Set
     def base = file(path, checkIfExists: true).parent
+    // A header-only samplesheet would build the reference, align nothing,
+    // and exit 0. Refuse it.
+    if (file(path).splitCsv(header: true).size() == 0)
+        error "samplesheet ${path} has a header but no samples"
     channel.fromPath(path, checkIfExists: true)
         .splitCsv(header: true, strip: true)
         .map { row ->

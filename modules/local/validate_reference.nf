@@ -6,9 +6,9 @@ process VALIDATE_REFERENCE {
     publishDir "${params.outdir}/reference", mode: params.publish_dir_mode
 
     input:
-    path viral_fasta
-    path viral_gtf
-    path host_gtf
+    path viral_fasta, stageAs: 'in/viral/*'
+    path viral_gtf,   stageAs: 'in/viral_gtf/*'
+    path host_gtf,    stageAs: 'in/host_gtf/*'
 
     output:
     val true,                      emit: ok
