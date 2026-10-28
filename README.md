@@ -271,7 +271,7 @@ conf/
   test.config             synthetic end-to-end run (CI)
   gse163952.config        the validation dataset
 modules/local/            one process per file
-bin/                      Python on the pipeline's PATH (and in the container)
+bin/                      Python, put on PATH by Nextflow at run time
   prepare_viral_gtf.py    rename contig, prefix gene names, synthesise gene rows
   validate_reference.py   pre-flight checks before genomeGenerate
   barcode_structure.py    infer CB/UMI length with no whitelist, from read collapse
