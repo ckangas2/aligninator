@@ -50,7 +50,7 @@ rm -rf "$OUT/_STARtmp"
 if [ -z "${CB_LEN:-}" ]; then
   echo "CB_LEN is not set in config/config.sh. Detecting..."
   echo
-  python3 scripts/barcode_structure.py --r1 "$R1" | tee "$OUT/barcode_structure.log"
+  python3 bin/barcode_structure.py --r1 "$R1" | tee "$OUT/barcode_structure.log"
   echo
   echo "Set CB_LEN, UMI_LEN and SOLO_WHITELIST in config/config.sh from the"
   echo "verdict above, then re-run. Not aligning on an auto-detected value:"
@@ -114,7 +114,7 @@ echo "=== convert to h5ad ==="
 for FEAT in Gene GeneFull; do
   d="$OUT/Solo.out/$FEAT/filtered"
   [ -d "$d" ] || { echo "  no $FEAT/filtered -- skipping"; continue; }
-  python3 scripts/solo_to_h5ad.py \
+  python3 bin/solo_to_h5ad.py \
     --solo-dir "$d" \
     --viral-genes-file "$REF_DIR/viral_genes.txt" \
     --sample "$SAMPLE" \

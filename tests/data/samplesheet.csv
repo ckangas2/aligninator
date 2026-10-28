@@ -1,0 +1,3 @@
+sample,fastq_1,fastq_2
+mock,mock_R1.fastq.gz,mock_R2.fastq.gz
+infected,infected_R1.fastq.gz,infected_R2.fastq.gz
