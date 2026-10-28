@@ -12,3 +12,5 @@ work/
 .nextflow.log*
 results/
 ci.config
+local.config
+results_*/
