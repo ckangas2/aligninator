@@ -67,3 +67,18 @@ median toward zero. This run is a single 3 dpi library.
 Not yet checked: which of the 22 sequencing runs the 7,226-cell
 deposited object actually covers. At ~330 cells per library it must be a
 subset, so a full reconciliation claim is not yet supported.
+
+## Reproduced through the Nextflow pipeline — 2026-10-28
+
+The same two libraries, rerun from FASTQ with
+`nextflow run . -profile gse163952,docker` (Nextflow 26.10.4, STAR 2.7.11b
+in the pipeline container), give identical results to the shell run above:
+195 contigs and 76 viral genes in the index; 2,175 mock cells at 0.0% above
+1% viral; 1,506 cells at 3 dpi with median `viral_frac` 0.0450 and
+83.3% / 46.1% / 3.0% of cells above 1% / 5% / 20%; GeneFull 1,596 cells at
+76.8% / 32.3% / 1.1%. All 76 viral features were found in every matrix,
+none missing. The mock library under GeneFull, not reported above, gives
+2,356 cells at 0.0%.
+
+Wall time 24 min on one node (index 16 CPUs, ~20 min; two libraries
+aligned in parallel), 6.8 CPU hours.
