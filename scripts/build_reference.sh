@@ -11,7 +11,7 @@ source config/config.sh
 mkdir -p "$REF_DIR" "$LOG_DIR"
 
 echo "=== 1. normalise the viral GTF ==="
-python3 scripts/prepare_viral_gtf.py \
+python3 bin/prepare_viral_gtf.py \
   --in-gtf   "$VIRAL_GTF_RAW" \
   --out-gtf  "$REF_DIR/viral.normalised.gtf" \
   --gene-list-out "$REF_DIR/viral_genes.txt" \
@@ -21,7 +21,7 @@ python3 scripts/prepare_viral_gtf.py \
 
 echo
 echo "=== 2. validate before building (fails fast) ==="
-python3 scripts/validate_reference.py \
+python3 bin/validate_reference.py \
   --viral-fasta "$VIRAL_FASTA" \
   --viral-gtf   "$REF_DIR/viral.normalised.gtf" \
   --host-gtf    "$HOST_GTF" \

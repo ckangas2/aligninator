@@ -76,6 +76,12 @@ def main():
     ap.add_argument("--exclude-from-viral", default="GFP")
     ap.add_argument("--feature-name-col", type=int, default=1,
                     help="column in features.tsv to use as var_names (0=id,1=name)")
+    ap.add_argument("--feature-set", default="",
+                    help="label for the summary row, e.g. Gene or GeneFull")
+    ap.add_argument("--summary-out", default="",
+                    help="write a one-row TSV of per-sample viral metrics here")
+    ap.add_argument("--strict", action="store_true",
+                    help="exit 3 if any listed viral feature is absent from the matrix")
     args = ap.parse_args()
 
     X, bc, ft = read_solo_dir(args.solo_dir)
@@ -101,6 +107,30 @@ def main():
           f"p90 {np.percentile(frac,90):.4f}  max {frac.max():.4f}")
     for t in (0.01, 0.05, 0.20):
         print(f"  cells > {t:>4.0%}      : {(frac>t).sum():,} ({(frac>t).mean():.1%})")
+
+    if args.summary_out:
+        n = len(frac)
+        row = dict(
+            sample=args.sample or Path(args.solo_dir).name,
+            feature_set=args.feature_set,
+            cells=n,
+            viral_features_listed=rep["requested"],
+            viral_features_found=rep["found"],
+            viral_features_scored=rep["scored"],
+            viral_features_missing=len(rep["missing"]),
+            median_viral_frac=round(float(np.median(frac)), 4) if n else 0.0,
+            p90_viral_frac=round(float(np.percentile(frac, 90)), 4) if n else 0.0,
+            max_viral_frac=round(float(frac.max()), 4) if n else 0.0,
+            pct_cells_gt_1pct=round(100 * float((frac > 0.01).mean()), 1) if n else 0.0,
+            pct_cells_gt_5pct=round(100 * float((frac > 0.05).mean()), 1) if n else 0.0,
+            pct_cells_gt_20pct=round(100 * float((frac > 0.20).mean()), 1) if n else 0.0,
+        )
+        pd.DataFrame([row]).to_csv(args.summary_out, sep="\t", index=False)
+
+    if args.strict and rep["missing"]:
+        print("\nFATAL (--strict): viral gene list does not match the matrix.",
+              file=sys.stderr)
+        return 3
 
     try:
         import anndata as ad

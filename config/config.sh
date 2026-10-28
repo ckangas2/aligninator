@@ -30,7 +30,7 @@
 
 # --- chemistry ---------------------------------------------------------
 # GSE163952 is Drop-seq, NOT 10x: R1 is 20 bp = 12 bp CB + 8 bp UMI, and
-# the barcode-collapse sweep (scripts/barcode_structure.py) puts the
+# the barcode-collapse sweep (bin/barcode_structure.py) puts the
 # plateau at 12. Drop-seq has no barcode whitelist; barcodes are called
 # from the data, so SOLO_WHITELIST is the literal string None.
 # Leave CB_LEN empty to make run_starsolo.sh detect and stop instead.

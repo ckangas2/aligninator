@@ -72,6 +72,28 @@ def parse_gtf(path):
                              end=int(f[4]), strand=f[6], attrs=parse_attrs(f[8])))
     return rows
 
+GENE_NAME_RE = re.compile(r'gene_name\s+"([^"]*)"')
+
+def host_exon_gene_names(path):
+    """gene_name values on exon rows, streamed.
+
+    Only the set of names is needed for the collision check. Holding every
+    row of a human GTF (~2.5M rows) as dicts takes many GB and gets the task
+    OOM-killed; streaming keeps this to a few MB.
+    """
+    names = set()
+    with open_maybe_gz(path) as fh:
+        for line in fh:
+            if line.startswith("#"):
+                continue
+            f = line.split("\t", 8)
+            if len(f) < 9 or f[2] != "exon":
+                continue
+            m = GENE_NAME_RE.search(f[8])
+            if m:
+                names.add(m.group(1))
+    return names
+
 def overlap_report(rows, contig, gene_key="gene_id"):
     """Fraction of a contig's exonic bases covered by >1 gene on the same strand."""
     exons = [r for r in rows if r["seqname"] == contig and r["feature"] == "exon"]
@@ -156,9 +178,7 @@ def main():
     vnames.discard(None)
     print(f"      viral gene names: {len(vnames)}")
     if args.host_gtf:
-        hrows = parse_gtf(args.host_gtf)
-        hnames = {r["attrs"].get("gene_name") for r in hrows
-                  if r["feature"] == "exon"}
+        hnames = host_exon_gene_names(args.host_gtf)
         hnames.discard(None)
         clash = sorted(vnames & hnames)
         if clash:
