@@ -3,7 +3,7 @@
 process CHECK_READS {
     tag "${sample}"
     label 'process_single'
-    publishDir "${params.outdir}/samples/${sample}", mode: params.publish_dir_mode,
+    publishDir path: { "${params.outdir}/samples/${sample}" }, mode: params.publish_dir_mode,
         pattern: '*.log'
 
     input:

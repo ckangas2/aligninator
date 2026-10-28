@@ -22,7 +22,8 @@ code path. Full numbers in [RESULTS.md](RESULTS.md).
 
 You need [Nextflow](https://www.nextflow.io/docs/latest/install.html)
 (≥ 24.04, which needs Java 17+) and Docker. Nothing else; STAR and Python
-come in the container.
+come in the container. The quickest Nextflow install, with its own Java:
+`conda create -n nf -c conda-forge -c bioconda nextflow`.
 
 ```bash
 nextflow run ckangas2/aligninator -r v0.2.0 -profile test,docker
@@ -303,7 +304,9 @@ nextflow run . -profile test,docker                   # end to end, ~2 min
 python3 tests/check_test_results.py results
 ```
 
-CI runs both on every push and pull request, then on `main` and on `v*`
+CI runs both on every push and pull request, on the oldest supported
+Nextflow and the current release (which uses the strict syntax parser, so
+`nextflow lint .` must stay clean), then on `main` and on `v*`
 tags publishes the container to `ghcr.io/ckangas2/aligninator`. The
 pipeline pins the image by version in `nextflow.config`, so a release is:
 bump `manifest.version` and `process.container` together, then tag

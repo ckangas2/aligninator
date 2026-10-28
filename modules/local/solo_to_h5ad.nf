@@ -1,7 +1,7 @@
 process SOLO_TO_H5AD {
     tag "${sample}:${feature}"
     label 'process_low'
-    publishDir "${params.outdir}/samples/${sample}", mode: params.publish_dir_mode
+    publishDir path: { "${params.outdir}/samples/${sample}" }, mode: params.publish_dir_mode
 
     input:
     tuple val(sample), val(feature), path(filtered, stageAs: 'filtered')

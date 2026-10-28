@@ -61,34 +61,40 @@ def helpMessage() {
     """.stripIndent()
 }
 
-if (params.help) { helpMessage(); System.exit(0) }
-
 // ---------------------------------------------------------------- params
 // On the command line `--cb_len null` arrives as the string "null"; treat it,
 // false and '' as unset rather than letting them reach STAR.
-def isSet(v) { v != null && !(v instanceof Boolean) && !(v.toString().trim() in ['', 'null', 'false', 'true']) }
-def chemistry_set = isSet(params.cb_len)
+def isSet(v) {
+    return v != null && !(v instanceof Boolean) && !(v.toString().trim() in ['', 'null', 'false', 'true'])
+}
 
-def problems = []
-if (!params.input) problems << "--input is required (CSV: sample,fastq_1,fastq_2)"
-if (params.star_index) {
-    if (!params.viral_genes)
-        problems << "--star_index needs --viral_genes: the viral feature list must come from the same build as the index"
-} else {
-    ['host_fasta', 'host_gtf', 'viral_fasta', 'viral_gtf'].each { p ->
-        if (!params[p]) problems << "--${p} is required when --star_index is not given"
+// Collects every parameter problem, reports them all, then stops.
+def validateParams() {
+    def problems = []
+    if (!params.input) problems << "--input is required (CSV: sample,fastq_1,fastq_2)"
+    if (params.star_index) {
+        if (!params.viral_genes)
+            problems << "--star_index needs --viral_genes: the viral feature list must come from the same build as the index"
+    } else {
+        ['host_fasta', 'host_gtf', 'viral_fasta', 'viral_gtf'].each { p ->
+            if (!params[p]) problems << "--${p} is required when --star_index is not given"
+        }
+    }
+    if (isSet(params.cb_len)) {
+        if (!(params.cb_len.toString() ==~ /\d+/))  problems << "--cb_len must be a whole number of bases, got '${params.cb_len}'"
+        if (!(params.umi_len.toString() ==~ /\d+/)) problems << "--umi_len is required alongside --cb_len, as a whole number of bases"
+    }
+    if (params.whitelist == null) problems << "--whitelist is required: a file path, or None for whitelist-free chemistries"
+    if (isSet(params.viral_contig_rename) && !(params.viral_contig_rename.toString() ==~ /[^:]+:[^:]+/))
+        problems << "--viral_contig_rename must be OLD:NEW"
+    if (problems) {
+        problems.each { msg -> log.error msg }
+        error "Fix the parameters above (see --help)."
     }
 }
-if (chemistry_set) {
-    if (!(params.cb_len.toString() ==~ /\d+/))  problems << "--cb_len must be a whole number of bases, got '${params.cb_len}'"
-    if (!(params.umi_len.toString() ==~ /\d+/)) problems << "--umi_len is required alongside --cb_len, as a whole number of bases"
-}
-if (params.whitelist == null) problems << "--whitelist is required: a file path, or None for whitelist-free chemistries"
-if (isSet(params.viral_contig_rename) && !(params.viral_contig_rename.toString() ==~ /[^:]+:[^:]+/))
-    problems << "--viral_contig_rename must be OLD:NEW"
-if (problems) {
-    problems.each { log.error it }
-    error "Fix the parameters above (see --help)."
+
+def resolvePath(base, String p) {
+    return (p.contains('://') || p.startsWith('/')) ? p : "${base}/${p}"
 }
 
 // Relative FASTQ paths resolve against the samplesheet's own directory, so a
@@ -96,7 +102,7 @@ if (problems) {
 def readSamplesheet(path) {
     def seen = [] as Set
     def base = file(path, checkIfExists: true).parent
-    Channel.fromPath(path, checkIfExists: true)
+    channel.fromPath(path, checkIfExists: true)
         .splitCsv(header: true, strip: true)
         .map { row ->
             ['sample', 'fastq_1', 'fastq_2'].each { k ->
@@ -106,45 +112,60 @@ def readSamplesheet(path) {
                 error "sample name '${row.sample}' may only contain letters, digits, '.', '_' and '-'"
             if (!seen.add(row.sample))
                 error "duplicate sample name in samplesheet: ${row.sample}"
-            def resolve = { String p -> p.contains('://') || p.startsWith('/') ? p : "${base}/${p}" }
             tuple(row.sample,
-                  file(resolve(row.fastq_1), checkIfExists: true),
-                  file(resolve(row.fastq_2), checkIfExists: true))
+                  file(resolvePath(base, row.fastq_1), checkIfExists: true),
+                  file(resolvePath(base, row.fastq_2), checkIfExists: true))
         }
 }
 
 // ---------------------------------------------------------------- workflow
 workflow {
 
-    reads = readSamplesheet(params.input)
-
-    // Chemistry is never inferred and then used silently. With no --cb_len,
-    // run the whitelist-free detector on every sample, report, and stop.
-    if (!chemistry_set) {
-        BARCODE_STRUCTURE(reads)
-        BARCODE_STRUCTURE.out.log
-            .collect()
-            .subscribe {
-                log.warn """
-                --cb_len was not set. Barcode structure was detected and written to
-                ${params.outdir}/barcode_structure/. Read the verdict, then re-run with
-                --cb_len, --umi_len and --whitelist set explicitly. The pipeline does not
-                align on an auto-detected value: chemistry belongs in the command line
-                where it is visible and reviewable.
-                """.stripIndent()
-            }
-        return
-    }
-
-    // ------------------------------------------------ reference
-    if (params.star_index) {
-        index       = Channel.value(file(params.star_index, checkIfExists: true))
-        viral_genes = Channel.value(file(params.viral_genes, checkIfExists: true))
+    if (params.help) {
+        helpMessage()
     } else {
-        host_fasta  = file(params.host_fasta,  checkIfExists: true)
-        host_gtf    = file(params.host_gtf,    checkIfExists: true)
-        viral_fasta = file(params.viral_fasta, checkIfExists: true)
-        viral_gtf   = file(params.viral_gtf,   checkIfExists: true)
+        validateParams()
+        def chemistry_set = isSet(params.cb_len)
+        def reads = readSamplesheet(params.input)
+
+        if (!chemistry_set) {
+            // Chemistry is never inferred and then used silently. With no
+            // --cb_len, run the whitelist-free detector on every sample,
+            // report, and stop.
+            BARCODE_STRUCTURE(reads)
+            BARCODE_STRUCTURE.out.log
+                .collect()
+                .subscribe {
+                    log.warn """
+                    --cb_len was not set. Barcode structure was detected and written to
+                    ${params.outdir}/barcode_structure/. Read the verdict, then re-run with
+                    --cb_len, --umi_len and --whitelist set explicitly. The pipeline does not
+                    align on an auto-detected value: chemistry belongs in the command line
+                    where it is visible and reviewable.
+                    """.stripIndent()
+                }
+        } else {
+            align(reads)
+        }
+    }
+}
+
+workflow align {
+    take:
+    reads
+
+    main:
+    // ------------------------------------------------ reference
+    def index       = null
+    def viral_genes = null
+    if (params.star_index) {
+        index       = channel.value(file(params.star_index, checkIfExists: true))
+        viral_genes = channel.value(file(params.viral_genes, checkIfExists: true))
+    } else {
+        def host_fasta  = file(params.host_fasta,  checkIfExists: true)
+        def host_gtf    = file(params.host_gtf,    checkIfExists: true)
+        def viral_fasta = file(params.viral_fasta, checkIfExists: true)
+        def viral_gtf   = file(params.viral_gtf,   checkIfExists: true)
 
         PREPARE_VIRAL_GTF(viral_gtf)
         VALIDATE_REFERENCE(viral_fasta, PREPARE_VIRAL_GTF.out.gtf, host_gtf)
@@ -154,7 +175,7 @@ workflow {
         viral_genes = PREPARE_VIRAL_GTF.out.genes
     }
 
-    whitelist = (params.whitelist.toString() == 'None')
+    def whitelist = (params.whitelist.toString() == 'None')
         ? file("${projectDir}/assets/NO_WHITELIST")
         : file(params.whitelist, checkIfExists: true)
 
@@ -162,7 +183,7 @@ workflow {
     CHECK_READS(reads)
     STARSOLO(CHECK_READS.out.reads, index, whitelist)
 
-    matrices = STARSOLO.out.solo
+    def matrices = STARSOLO.out.solo
         .flatMap { sample, solo ->
             params.solo_features.tokenize(' ').collect { feat ->
                 tuple(sample, feat, file("${solo}/${feat}/filtered"))
@@ -171,11 +192,8 @@ workflow {
     SOLO_TO_H5AD(matrices, viral_genes)
 
     SUMMARY(SOLO_TO_H5AD.out.summary.collect(),
-            STARSOLO.out.star_summary.map { s, f -> f }.collect())
-}
-
-workflow.onComplete {
-    if (workflow.success && chemistry_set) {
-        log.info "\naligninator finished. Per-sample viral load: ${params.outdir}/summary.tsv"
+            STARSOLO.out.star_summary.map { _sample, f -> f }.collect())
+    SUMMARY.out.tsv.subscribe {
+        log.info "aligninator: per-sample viral load written to ${params.outdir}/summary.tsv"
     }
 }

@@ -22,14 +22,20 @@ jobs:
       - run: bash tests/run_tests.sh
 
   pipeline:
-    name: Nextflow end to end (-profile test,docker)
+    name: End to end, Nextflow ${{ matrix.nxf }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Oldest supported, and whatever is current: 25.10 changed the
+        # default parser, and both must keep working.
+        nxf: ['24.10.0', 'latest-stable']
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: '17' }
       - uses: nf-core/setup-nextflow@v2
-        with: { version: '24.10.0' }
+        with: { version: '${{ matrix.nxf }}' }
       - uses: actions/setup-python@v5
         with: { python-version: '3.11' }
       - run: pip install pandas
@@ -38,6 +44,10 @@ jobs:
       - name: Build container
         run: docker build -t aligninator:ci .
       - run: echo "process.container = 'aligninator:ci'" > ci.config
+
+      - name: Lint (strict syntax)
+        if: matrix.nxf == 'latest-stable'
+        run: nextflow lint .
 
       - name: Run test profile
         run: nextflow run . -profile test,docker -c ci.config --outdir results
@@ -66,7 +76,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: test-results
+          name: test-results-nxf-${{ matrix.nxf }}
           path: |
             results/summary.tsv
             results/pipeline_info/

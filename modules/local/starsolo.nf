@@ -1,7 +1,7 @@
 process STARSOLO {
     tag "${sample}"
     label 'process_star_align'
-    publishDir "${params.outdir}/samples/${sample}", mode: params.publish_dir_mode,
+    publishDir path: { "${params.outdir}/samples/${sample}" }, mode: params.publish_dir_mode,
         saveAs: { f -> f.endsWith('.bam') && !params.save_bam ? null : f }
 
     input:
